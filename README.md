@@ -16,6 +16,17 @@ cp .env.example .env
 docker compose -f deployments/docker-compose.yml up -d --build
 ```
 
+После запуска:
+- **Front**: `http://localhost:3000`
+- **API**: `http://localhost:8080`
+- **Swagger UI**: `http://localhost:8081`
+
+Остановить:
+
+```bash
+docker compose -f deployments/docker-compose.yml down
+```
+
 ## Документация (Swagger UI)
 
 - **Swagger UI**: `http://localhost:8081`
@@ -61,4 +72,45 @@ curl 'http://localhost:8080/subscriptions/total?user_id=60601fee-2bf1-4721-ae6f-
 ## Миграции
 
 Миграции лежат в `migrations/` и прогоняются при старте сервиса автоматически.
+
+Если добавил новую миграцию и хочешь применить её локально:
+
+```bash
+docker compose -f deployments/docker-compose.yml up -d --build api
+docker compose -f deployments/docker-compose.yml logs -f --tail=50 api
+```
+
+Полный сброс локальной БД (все данные будут удалены):
+
+```bash
+docker compose -f deployments/docker-compose.yml down -v
+docker compose -f deployments/docker-compose.yml up -d --build
+```
+
+## Разработка без полного compose
+
+### Backend (Go) + Postgres (в контейнере)
+
+Поднять только Postgres:
+
+```bash
+docker compose -f deployments/docker-compose.yml up -d postgres
+```
+
+Запустить API локально:
+
+```bash
+cp .env.example .env
+go run ./cmd/subscriptions-api
+```
+
+### Frontend (Vite)
+
+Запуск в dev-режиме (прокси `/api` → `http://localhost:8080` настроен в `front/vite.config.ts`):
+
+```bash
+cd front
+npm install
+npm run dev
+```
 
