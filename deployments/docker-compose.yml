@@ -1,0 +1,41 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    env_file:
+      - ../.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      CONFIG_PATH: /app/configs/config.yaml
+    volumes:
+      - ../configs:/app/configs:ro
+      - ../migrations:/app/migrations:ro
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: subscriptions
+      POSTGRES_USER: subscriptions
+      POSTGRES_PASSWORD: subscriptions
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U subscriptions -d subscriptions"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui:v5.28.0
+    environment:
+      SWAGGER_JSON: /spec/openapi.yaml
+    ports:
+      - "8081:8080"
+    volumes:
+      - ../api/openapi.yaml:/spec/openapi.yaml:ro
+

@@ -1,0 +1,249 @@
+openapi: 3.0.3
+info:
+  title: Subscriptions API
+  version: 0.2.0
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: subscriptions
+    description: CRUDL операций над подписками и агрегация стоимости
+paths:
+  /healthz:
+    get:
+      summary: Healthcheck
+      responses:
+        "200":
+          description: OK
+
+  /subscriptions:
+    post:
+      tags: [subscriptions]
+      summary: Создать подписку
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionCreateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    get:
+      tags: [subscriptions]
+      summary: Список подписок
+      parameters:
+        - in: query
+          name: user_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: service_name
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscription"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /subscriptions/total:
+    get:
+      tags: [subscriptions]
+      summary: Суммарная стоимость подписок за период
+      parameters:
+        - in: query
+          name: user_id
+          schema: { type: string, format: uuid }
+          description: Фильтр по пользователю
+        - in: query
+          name: service_name
+          schema: { type: string }
+          description: Фильтр по названию подписки
+        - in: query
+          name: from
+          required: true
+          schema:
+            $ref: "#/components/schemas/Month"
+        - in: query
+          name: to
+          required: true
+          schema:
+            $ref: "#/components/schemas/Month"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TotalResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /subscriptions/{id}:
+    get:
+      tags: [subscriptions]
+      summary: Получить подписку
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    patch:
+      tags: [subscriptions]
+      summary: Частично обновить подписку
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionPatchRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      tags: [subscriptions]
+      summary: Удалить подписку
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204":
+          description: No Content
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  schemas:
+    Month:
+      type: string
+      example: "07-2025"
+      pattern: "^(0[1-9]|1[0-2])-[0-9]{4}$"
+      description: Месяц и год в формате MM-YYYY
+
+    SubscriptionCreateRequest:
+      type: object
+      required: [service_name, price, user_id, start_date]
+      properties:
+        service_name: { type: string, example: "Yandex Plus" }
+        price: { type: integer, example: 400, minimum: 0 }
+        user_id: { type: string, format: uuid }
+        start_date: { $ref: "#/components/schemas/Month" }
+        end_date: { $ref: "#/components/schemas/Month" }
+
+    SubscriptionPatchRequest:
+      type: object
+      properties:
+        service_name: { type: string, nullable: true }
+        price: { type: integer, nullable: true, minimum: 0 }
+        start_date: { $ref: "#/components/schemas/Month" }
+        end_date:
+          allOf:
+            - $ref: "#/components/schemas/Month"
+          nullable: true
+      description: >
+        Любое поле можно передать для изменения. Для очистки end_date передайте null.
+
+    Subscription:
+      type: object
+      required: [id, service_name, price, user_id, start_date, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        service_name: { type: string }
+        price: { type: integer }
+        user_id: { type: string, format: uuid }
+        start_date: { $ref: "#/components/schemas/Month" }
+        end_date:
+          allOf:
+            - $ref: "#/components/schemas/Month"
+          nullable: true
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    TotalResponse:
+      type: object
+      required: [total]
+      properties:
+        total:
+          type: integer
+          example: 1200
+          description: Сумма в рублях
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
