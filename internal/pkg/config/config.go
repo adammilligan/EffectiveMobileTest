@@ -23,6 +23,7 @@ func (c Config) PostgresDSN() string {
 	if sslMode == "" {
 		sslMode = "disable"
 	}
+
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		c.DB.User,
@@ -36,29 +37,35 @@ func (c Config) PostgresDSN() string {
 
 func Load() (Config, error) {
 	cfg := defaultConfig()
+
 	cfgFromYaml, err := loadFromYaml(envOrDefault("CONFIG_PATH", "configs/config.yaml"))
 	if err != nil {
 		return Config{}, err
 	}
-	cfg = merge(cfg, cfgFromYaml)
 
+	cfg = merge(cfg, cfgFromYaml)
 	cfg = applyEnvOverrides(cfg)
 
 	if cfg.Server.Host == "" {
 		return Config{}, errors.New("server.host is empty")
 	}
+
 	if cfg.Server.Port == "" {
 		return Config{}, errors.New("server.port is empty")
 	}
+
 	if cfg.DB.Host == "" {
 		return Config{}, errors.New("db.host is empty")
 	}
+
 	if cfg.DB.Port == "" {
 		return Config{}, errors.New("db.port is empty")
 	}
+
 	if cfg.DB.Name == "" {
 		return Config{}, errors.New("db.name is empty")
 	}
+
 	if cfg.DB.User == "" {
 		return Config{}, errors.New("db.user is empty")
 	}
@@ -90,6 +97,7 @@ func loadFromYaml(path string) (Config, error) {
 	if path == "" {
 		return Config{}, errors.New("CONFIG_PATH is empty")
 	}
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return Config{}, fmt.Errorf("read config yaml: %w", err)
@@ -111,9 +119,11 @@ func merge(base Config, override Config) Config {
 	if override.Server.Host != "" {
 		base.Server.Host = override.Server.Host
 	}
+
 	if override.Server.Port != "" {
 		base.Server.Port = override.Server.Port
 	}
+
 	if override.Log.Level != "" {
 		base.Log.Level = override.Log.Level
 	}
@@ -121,21 +131,27 @@ func merge(base Config, override Config) Config {
 	if override.DB.Host != "" {
 		base.DB.Host = override.DB.Host
 	}
+
 	if override.DB.Port != "" {
 		base.DB.Port = override.DB.Port
 	}
+
 	if override.DB.Name != "" {
 		base.DB.Name = override.DB.Name
 	}
+
 	if override.DB.User != "" {
 		base.DB.User = override.DB.User
 	}
+
 	if override.DB.Password != "" {
 		base.DB.Password = override.DB.Password
 	}
+
 	if override.DB.SSLMode != "" {
 		base.DB.SSLMode = override.DB.SSLMode
 	}
+
 	return base
 }
 
@@ -150,6 +166,7 @@ func applyEnvOverrides(cfg Config) Config {
 	cfg.DB.User = envOrDefault("DB_USER", cfg.DB.User)
 	cfg.DB.Password = envOrDefault("DB_PASSWORD", cfg.DB.Password)
 	cfg.DB.SSLMode = envOrDefault("DB_SSL_MODE", cfg.DB.SSLMode)
+
 	return cfg
 }
 
@@ -158,9 +175,11 @@ func envOrDefault(key string, defaultValue string) string {
 	if !isOk {
 		return defaultValue
 	}
+
 	if value == "" {
 		return defaultValue
 	}
+
 	return value
 }
 

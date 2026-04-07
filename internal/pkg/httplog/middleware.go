@@ -21,8 +21,10 @@ func (w *responseWriter) Write(p []byte) (int, error) {
 	if w.status == 0 {
 		w.status = http.StatusOK
 	}
+
 	n, err := w.ResponseWriter.Write(p)
 	w.bytes += n
+
 	return n, err
 }
 

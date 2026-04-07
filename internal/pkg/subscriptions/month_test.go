@@ -27,11 +27,14 @@ func TestParseMonth(t *testing.T) {
 				if err == nil {
 					t.Fatalf("expected error, got nil")
 				}
+
 				return
 			}
+
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
+
 			if got := m.String(); got != tt.want {
 				t.Fatalf("want %q, got %q", tt.want, got)
 			}
@@ -44,10 +47,12 @@ func TestOverlapMonthsInclusive(t *testing.T) {
 
 	parse := func(t *testing.T, v string) Month {
 		t.Helper()
+
 		m, err := ParseMonth(v)
 		if err != nil {
 			t.Fatalf("parse month: %v", err)
 		}
+
 		return m
 	}
 
@@ -58,6 +63,7 @@ func TestOverlapMonthsInclusive(t *testing.T) {
 		t.Parallel()
 		start := parse(t, "08-2025")
 		end := parse(t, "08-2025")
+
 		got := OverlapMonthsInclusive(start, &end, from, to)
 		if got != 1 {
 			t.Fatalf("want 1, got %d", got)
@@ -67,6 +73,7 @@ func TestOverlapMonthsInclusive(t *testing.T) {
 	t.Run("open ended overlaps", func(t *testing.T) {
 		t.Parallel()
 		start := parse(t, "08-2025")
+
 		got := OverlapMonthsInclusive(start, nil, from, to)
 		if got != 2 {
 			t.Fatalf("want 2, got %d", got)
@@ -77,6 +84,7 @@ func TestOverlapMonthsInclusive(t *testing.T) {
 		t.Parallel()
 		start := parse(t, "01-2020")
 		end := parse(t, "02-2020")
+
 		got := OverlapMonthsInclusive(start, &end, from, to)
 		if got != 0 {
 			t.Fatalf("want 0, got %d", got)

@@ -76,11 +76,13 @@ func TestCreateValidation(t *testing.T) {
 	for name, tc := range tests {
 		name := name
 		tc := tc
+
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
 			req := httptest.NewRequest(http.MethodPost, "/subscriptions", bytes.NewReader([]byte(tc.body)))
 			req.Header.Set("Content-Type", "application/json")
+
 			rr := httptest.NewRecorder()
 
 			r.ServeHTTP(rr, req)

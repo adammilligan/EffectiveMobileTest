@@ -21,6 +21,7 @@ func TestRepo_Integration_CRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("pool: %v", err)
 	}
+
 	t.Cleanup(pool.Close)
 
 	sqlDB := stdlib.OpenDBFromPool(pool)
@@ -43,6 +44,7 @@ func TestRepo_Integration_CRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
+
 	if created.ID == "" {
 		t.Fatalf("expected id")
 	}
@@ -51,9 +53,11 @@ func TestRepo_Integration_CRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
+
 	if !isFound {
 		t.Fatalf("expected found")
 	}
+
 	if got.ServiceName != "Yandex Plus" || got.PriceRub != 400 {
 		t.Fatalf("unexpected subscription: %+v", got)
 	}
@@ -62,12 +66,14 @@ func TestRepo_Integration_CRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list: %v", err)
 	}
+
 	if len(list) == 0 {
 		t.Fatalf("expected non-empty list")
 	}
 
 	newName := "Yandex Plus 2"
 	newPrice := 500
+
 	updated, isFound, err := repo.Update(ctx, created.ID, UpdateParams{
 		ServiceName: &newName,
 		PriceRub:    &newPrice,
@@ -75,9 +81,11 @@ func TestRepo_Integration_CRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("update: %v", err)
 	}
+
 	if !isFound {
 		t.Fatalf("expected found on update")
 	}
+
 	if updated.ServiceName != newName || updated.PriceRub != newPrice {
 		t.Fatalf("unexpected updated: %+v", updated)
 	}
@@ -86,6 +94,7 @@ func TestRepo_Integration_CRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("delete: %v", err)
 	}
+
 	if !isDeleted {
 		t.Fatalf("expected deleted")
 	}
@@ -101,6 +110,7 @@ func TestRepo_Integration_TotalQuerySelection(t *testing.T) {
 	if err != nil {
 		t.Fatalf("pool: %v", err)
 	}
+
 	t.Cleanup(pool.Close)
 
 	sqlDB := stdlib.OpenDBFromPool(pool)
@@ -146,9 +156,11 @@ func TestRepo_Integration_TotalQuerySelection(t *testing.T) {
 	if err != nil {
 		t.Fatalf("find overlapping: %v", err)
 	}
+
 	if len(items) != 1 {
 		t.Fatalf("expected 1 item, got %d", len(items))
 	}
+
 	if items[0].ServiceName != "A" {
 		t.Fatalf("expected A, got %s", items[0].ServiceName)
 	}
@@ -172,6 +184,7 @@ func startPostgres(t *testing.T, ctx context.Context) (*postgres.PostgresContain
 	dsn, err := pg.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
 		_ = pg.Terminate(ctx)
+
 		t.Fatalf("dsn: %v", err)
 	}
 

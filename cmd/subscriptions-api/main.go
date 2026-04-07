@@ -41,6 +41,7 @@ func main() {
 
 	go func() {
 		slog.Info("http server started", "addr", cfg.HTTPAddr())
+
 		runErr := srv.ListenAndServe()
 		if runErr != nil && !errors.Is(runErr, http.ErrServerClosed) {
 			slog.Error("http server failed", "error", runErr)
@@ -55,6 +56,7 @@ func main() {
 	defer cancel()
 
 	slog.Info("shutting down")
+
 	if shutdownErr := srv.Shutdown(ctx); shutdownErr != nil {
 		slog.Error("http shutdown failed", "error", shutdownErr)
 	}

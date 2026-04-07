@@ -46,13 +46,16 @@ VALUES ($1, $2, $3, $4, $5)
 RETURNING id, service_name, price, user_id, start_date, end_date, created_at, updated_at`
 
 	start := p.StartMonth.Time()
+
 	var end *time.Time
+
 	if p.EndMonth != nil {
 		t := p.EndMonth.Time()
 		end = &t
 	}
 
 	row := r.pool.QueryRow(ctx, q, p.ServiceName, p.PriceRub, p.UserID, start, end)
+
 	return scanSubscription(row)
 }
 
@@ -63,22 +66,27 @@ FROM subscriptions
 WHERE id = $1`
 
 	row := r.pool.QueryRow(ctx, q, id)
+
 	s, err := scanSubscription(row)
 	if err != nil {
 		if isNoRows(err) {
 			return Subscription{}, false, nil
 		}
+
 		return Subscription{}, false, err
 	}
+
 	return s, true, nil
 }
 
 func (r *Repo) Delete(ctx context.Context, id string) (bool, error) {
 	const q = `DELETE FROM subscriptions WHERE id = $1`
+
 	ct, err := r.pool.Exec(ctx, q, id)
 	if err != nil {
 		return false, err
 	}
+
 	return ct.RowsAffected() > 0, nil
 }
 
@@ -87,9 +95,11 @@ func (r *Repo) List(ctx context.Context, p ListParams) ([]Subscription, error) {
 	if limit <= 0 {
 		limit = 50
 	}
+
 	if limit > 200 {
 		limit = 200
 	}
+
 	offset := p.Offset
 	if offset < 0 {
 		offset = 0
@@ -103,8 +113,8 @@ WHERE ($1::uuid IS NULL OR user_id = $1::uuid)
 ORDER BY created_at DESC
 LIMIT $3 OFFSET $4`
 
-	var userID *string = p.UserID
-	var serviceName *string = p.ServiceName
+	userID := p.UserID
+	serviceName := p.ServiceName
 
 	rows, err := r.pool.Query(ctx, q, userID, serviceName, limit, offset)
 	if err != nil {
@@ -113,16 +123,20 @@ LIMIT $3 OFFSET $4`
 	defer rows.Close()
 
 	var out []Subscription
+
 	for rows.Next() {
 		s, err := scanSubscription(rows)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, s)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return out, nil
 }
 
@@ -147,15 +161,19 @@ WHERE id = $1
 RETURNING id, service_name, price, user_id, start_date, end_date, created_at, updated_at`
 
 	var start *time.Time
+
 	if p.StartMonth != nil {
 		t := p.StartMonth.Time()
 		start = &t
 	}
 
 	var end *time.Time
+
 	isEndProvided := false
+
 	if p.EndMonth != nil {
 		isEndProvided = true
+
 		if *p.EndMonth != nil {
 			t := (*p.EndMonth).Time()
 			end = &t
@@ -163,13 +181,16 @@ RETURNING id, service_name, price, user_id, start_date, end_date, created_at, up
 	}
 
 	row := r.pool.QueryRow(ctx, q, id, p.ServiceName, p.PriceRub, start, end, isEndProvided)
+
 	s, err := scanSubscription(row)
 	if err != nil {
 		if isNoRows(err) {
 			return Subscription{}, false, nil
 		}
+
 		return Subscription{}, false, err
 	}
+
 	return s, true, nil
 }
 
@@ -199,16 +220,20 @@ WHERE ($1::uuid IS NULL OR user_id = $1::uuid)
 	defer rows.Close()
 
 	var out []Subscription
+
 	for rows.Next() {
 		s, err := scanSubscription(rows)
 		if err != nil {
 			return nil, err
 		}
+
 		out = append(out, s)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+
 	return out, nil
 }
 
@@ -233,7 +258,9 @@ func scanSubscription(row rowScanner) (Subscription, error) {
 	}
 
 	startMonth := Month{t: time.Date(startDate.Year(), startDate.Month(), 1, 0, 0, 0, 0, time.UTC)}
+
 	var endMonth *Month
+
 	if endDate != nil {
 		m := Month{t: time.Date(endDate.Year(), endDate.Month(), 1, 0, 0, 0, 0, time.UTC)}
 		endMonth = &m

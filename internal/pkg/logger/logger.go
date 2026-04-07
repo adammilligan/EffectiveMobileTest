@@ -12,6 +12,7 @@ func New(level string) *slog.Logger {
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: parseLevel(level),
 	})
+
 	return slog.New(handler)
 }
 

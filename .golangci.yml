@@ -1,0 +1,23 @@
+version: 2
+
+run:
+  timeout: 3m
+  tests: true
+
+linters:
+  enable:
+    - errorlint
+    - wsl_v5
+
+linters-settings:
+  wsl_v5:
+    # Keep it strict but practical for a small service.
+    allow-assign-and-anything: false
+    allow-cuddle-declarations: false
+    allow-multiline-assign: true
+    allow-separated-leading-comment: false
+    force-case-trailing-whitespace: 0
+
+issues:
+  exclude-use-default: false
+

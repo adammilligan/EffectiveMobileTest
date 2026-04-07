@@ -43,10 +43,12 @@ type subscriptionResponse struct {
 
 func toResponse(s subscriptions.Subscription) subscriptionResponse {
 	var end *string
+
 	if s.EndMonth != nil {
 		v := s.EndMonth.String()
 		end = &v
 	}
+
 	return subscriptionResponse{
 		ID:          s.ID,
 		ServiceName: s.ServiceName,
@@ -80,10 +82,12 @@ func (h *Handlers) Create(w http.ResponseWriter, r *http.Request) {
 		httpjson.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
 	if err := validate.NonNegativeInt(req.Price, "price"); err != nil {
 		httpjson.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+
 	if err := validate.UUID(req.UserID, "user_id"); err != nil {
 		httpjson.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -96,16 +100,19 @@ func (h *Handlers) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var end *subscriptions.Month
+
 	if req.EndDate != nil {
 		m, err := subscriptions.ParseMonth(*req.EndDate)
 		if err != nil {
 			httpjson.WriteError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		if m.IsBefore(start) {
 			httpjson.WriteError(w, http.StatusBadRequest, "end_date must be >= start_date")
 			return
 		}
+
 		end = &m
 	}
 
@@ -136,6 +143,7 @@ func (h *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
 		return
 	}
+
 	if !isFound {
 		httpjson.WriteError(w, http.StatusNotFound, "not found")
 		return
@@ -173,6 +181,7 @@ func (h *Handlers) Patch(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+
 		p.ServiceName = req.ServiceName.Value
 	}
 
@@ -183,6 +192,7 @@ func (h *Handlers) Patch(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+
 		p.PriceRub = req.Price.Value
 	}
 
@@ -191,17 +201,20 @@ func (h *Handlers) Patch(w http.ResponseWriter, r *http.Request) {
 			httpjson.WriteError(w, http.StatusBadRequest, "start_date cannot be null")
 			return
 		}
+
 		m, err := subscriptions.ParseMonth(*req.StartDate.Value)
 		if err != nil {
 			httpjson.WriteError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		p.StartMonth = &m
 	}
 
 	if req.EndDate.IsSet {
 		if req.EndDate.Value == nil {
 			var nilMonth *subscriptions.Month
+
 			p.EndMonth = &nilMonth
 		} else {
 			m, err := subscriptions.ParseMonth(*req.EndDate.Value)
@@ -209,6 +222,7 @@ func (h *Handlers) Patch(w http.ResponseWriter, r *http.Request) {
 				httpjson.WriteError(w, http.StatusBadRequest, err.Error())
 				return
 			}
+
 			end := m
 			endPtr := &end
 			p.EndMonth = &endPtr
@@ -225,6 +239,7 @@ func (h *Handlers) Patch(w http.ResponseWriter, r *http.Request) {
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
 		return
 	}
+
 	if !isFound {
 		httpjson.WriteError(w, http.StatusNotFound, "not found")
 		return
@@ -245,6 +260,7 @@ func (h *Handlers) Delete(w http.ResponseWriter, r *http.Request) {
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
 		return
 	}
+
 	if !isDeleted {
 		httpjson.WriteError(w, http.StatusNotFound, "not found")
 		return
@@ -255,13 +271,16 @@ func (h *Handlers) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) List(w http.ResponseWriter, r *http.Request) {
 	var userID *string
+
 	if v := r.URL.Query().Get("user_id"); v != "" {
 		if err := validate.UUID(v, "user_id"); err != nil {
 			httpjson.WriteError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		userID = &v
 	}
+
 	var serviceName *string
 	if v := r.URL.Query().Get("service_name"); v != "" {
 		serviceName = &v
@@ -285,6 +304,7 @@ func (h *Handlers) List(w http.ResponseWriter, r *http.Request) {
 	for _, s := range list {
 		out = append(out, toResponse(s))
 	}
+
 	httpjson.WriteJSON(w, http.StatusOK, out)
 }
 
@@ -294,11 +314,13 @@ type totalResponse struct {
 
 func (h *Handlers) Total(w http.ResponseWriter, r *http.Request) {
 	var userID *string
+
 	if v := r.URL.Query().Get("user_id"); v != "" {
 		if err := validate.UUID(v, "user_id"); err != nil {
 			httpjson.WriteError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		userID = &v
 	}
 
@@ -309,16 +331,19 @@ func (h *Handlers) Total(w http.ResponseWriter, r *http.Request) {
 
 	fromRaw := r.URL.Query().Get("from")
 	toRaw := r.URL.Query().Get("to")
+
 	from, err := subscriptions.ParseMonth(fromRaw)
 	if err != nil {
 		httpjson.WriteError(w, http.StatusBadRequest, "invalid from")
 		return
 	}
+
 	to, err := subscriptions.ParseMonth(toRaw)
 	if err != nil {
 		httpjson.WriteError(w, http.StatusBadRequest, "invalid to")
 		return
 	}
+
 	if from.Time().After(to.Time()) {
 		httpjson.WriteError(w, http.StatusBadRequest, "from must be <= to")
 		return
@@ -336,6 +361,7 @@ func (h *Handlers) Total(w http.ResponseWriter, r *http.Request) {
 	}
 
 	total := 0
+
 	for _, s := range items {
 		months := subscriptions.OverlapMonthsInclusive(s.StartMonth, s.EndMonth, from, to)
 		total += months * s.PriceRub
@@ -349,10 +375,12 @@ func parseIntQuery(r *http.Request, key string, defaultValue int) int {
 	if raw == "" {
 		return defaultValue
 	}
+
 	v, err := strconv.Atoi(raw)
 	if err != nil {
 		return defaultValue
 	}
+
 	return v
 }
 

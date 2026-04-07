@@ -51,10 +51,13 @@ func runMigrations(db *sql.DB) error {
 	}
 
 	slog.Info("running migrations", "path", abs)
+
 	if err := migrator.Up(db, abs); err != nil {
 		return err
 	}
+
 	slog.Info("migrations applied")
+
 	return nil
 }
 

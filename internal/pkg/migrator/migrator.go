@@ -22,6 +22,7 @@ func Up(db *sql.DB, migrationsPath string) error {
 	if err != nil {
 		return fmt.Errorf("init migrator: %w", err)
 	}
+
 	defer func() {
 		_, _ = m.Close()
 	}()
