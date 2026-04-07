@@ -1,0 +1,34 @@
+{
+  "name": "EffectiveMobileTest",
+  "dockerComposeFile": [
+    "../deployments/docker-compose.yml",
+    "docker-compose.devcontainer.yml"
+  ],
+  "service": "dev",
+  "workspaceFolder": "/workspace",
+  "runServices": [
+    "dev",
+    "postgres",
+    "swagger-ui"
+  ],
+  "shutdownAction": "stopCompose",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "go.useLanguageServer": true,
+        "go.toolsManagement.autoUpdate": true,
+        "editor.formatOnSave": true
+      },
+      "extensions": [
+        "golang.Go",
+        "ms-azuretools.vscode-docker",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  }
+}

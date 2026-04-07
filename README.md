@@ -7,8 +7,36 @@
 
 ## Запуск в Dev Container
 
-В репозитории отсутствует конфигурация Dev Container (директория `.devcontainer/` не добавлена).
-Запуск в Dev Container не поддерживается без предварительной настройки окружения.
+1) Установить расширение VS Code `Dev Containers` (Remote - Containers).
+
+2) Открыть проект в контейнере одним из способов:
+- через меню в левом нижнем углу VS Code → `Reopen in Container`
+- через палитру команд (Cmd+Shift+P) → `Dev Containers: Rebuild and Reopen in Container`
+
+После успешной сборки контейнера автоматически будут подняты сервисы:
+- **Postgres** (для API)
+- **Swagger UI** (документация)
+
+Далее команды выполняются в терминале Dev Container.
+
+Запуск API:
+
+```bash
+go run ./cmd/subscriptions-api
+```
+
+Запуск Front в dev‑режиме:
+
+```bash
+cd front
+npm install
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+Адреса по умолчанию:
+- **API**: `http://localhost:8080`
+- **Swagger UI**: `http://localhost:8081`
+- **Front (dev)**: `http://localhost:5173`
 
 ---
 
