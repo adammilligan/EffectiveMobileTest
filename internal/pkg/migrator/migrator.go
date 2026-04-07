@@ -10,6 +10,8 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
+// Up applies all up migrations from migrationsPath.
+// migrationsPath must point to a directory containing *.up.sql files.
 func Up(db *sql.DB, migrationsPath string) error {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {

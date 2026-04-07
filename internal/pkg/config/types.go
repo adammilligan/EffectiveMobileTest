@@ -1,10 +1,12 @@
 package config
 
+// ServerConfig describes HTTP server binding parameters.
 type ServerConfig struct {
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
 }
 
+// DBConfig describes PostgreSQL connection parameters.
 type DBConfig struct {
 	Host     string `yaml:"host"`
 	Port     string `yaml:"port"`
@@ -14,6 +16,7 @@ type DBConfig struct {
 	SSLMode  string `yaml:"ssl_mode"`
 }
 
+// LogConfig describes application logging parameters.
 type LogConfig struct {
 	Level string `yaml:"level"`
 }

@@ -21,6 +21,8 @@ type App struct {
 	Pool   *pgxpool.Pool
 }
 
+// New initializes the subscriptions API application:
+// it connects to PostgreSQL, applies migrations, and builds the HTTP router.
 func New(ctx context.Context, cfg config.Config) (*App, error) {
 	pool, err := postgres.NewPool(ctx, cfg.PostgresDSN())
 	if err != nil {

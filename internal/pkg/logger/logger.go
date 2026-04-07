@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+// New builds a JSON slog.Logger writing to stdout.
+// Level accepts: debug|info|warn|warning|error (case-insensitive).
 func New(level string) *slog.Logger {
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: parseLevel(level),

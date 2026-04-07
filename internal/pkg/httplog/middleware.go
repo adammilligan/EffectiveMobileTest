@@ -26,6 +26,8 @@ func (w *responseWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
+// Middleware logs basic request/response information via slog.
+// It logs method, path, query, status, response size and duration.
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
