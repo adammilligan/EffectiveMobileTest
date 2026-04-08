@@ -3,12 +3,14 @@ package subscriptionsapi
 import (
 	"net/http"
 
+	"github.com/adammilligan/EffectiveMobileTest/internal/pkg/config"
 	"github.com/adammilligan/EffectiveMobileTest/internal/pkg/httplog"
+	"github.com/adammilligan/EffectiveMobileTest/internal/pkg/ratelimit"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func NewRouter(h *Handlers) http.Handler {
+func NewRouter(cfg config.Config, h *Handlers) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -22,6 +24,7 @@ func NewRouter(h *Handlers) http.Handler {
 	})
 
 	r.Route("/subscriptions", func(r chi.Router) {
+		r.Use(ratelimit.Middleware(cfg.RateLimit))
 		r.Post("/", h.Create)
 		r.Get("/", h.List)
 		r.Get("/total", h.Total)

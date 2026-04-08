@@ -4,14 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Server ServerConfig
-	DB     DBConfig
-	Log    LogConfig
+	Server    ServerConfig
+	DB        DBConfig
+	Log       LogConfig
+	RateLimit RateLimitConfig
 }
 
 func (c Config) HTTPAddr() string {
@@ -90,6 +92,11 @@ func defaultConfig() Config {
 			Password: "subscriptions",
 			SSLMode:  "disable",
 		},
+		RateLimit: RateLimitConfig{
+			IsEnabled:         true,
+			RequestsPerMinute: 120,
+			Burst:             20,
+		},
 	}
 }
 
@@ -108,10 +115,25 @@ func loadFromYaml(path string) (Config, error) {
 		return Config{}, fmt.Errorf("parse config yaml: %w", unmarshalErr)
 	}
 
+	var rateLimit RateLimitConfig
+	if yc.RateLimit.IsEnabled != nil {
+		rateLimit.IsEnabled = *yc.RateLimit.IsEnabled
+		rateLimit.IsEnabledIsSet = true
+	}
+	if yc.RateLimit.RequestsPerMinute != nil {
+		rateLimit.RequestsPerMinute = *yc.RateLimit.RequestsPerMinute
+		rateLimit.IsRequestsPerMinuteIsSet = true
+	}
+	if yc.RateLimit.Burst != nil {
+		rateLimit.Burst = *yc.RateLimit.Burst
+		rateLimit.IsBurstIsSet = true
+	}
+
 	return Config{
-		Server: yc.Server,
-		Log:    yc.Log,
-		DB:     yc.DB,
+		Server:    yc.Server,
+		Log:       yc.Log,
+		DB:        yc.DB,
+		RateLimit: rateLimit,
 	}, nil
 }
 
@@ -152,6 +174,18 @@ func merge(base Config, override Config) Config {
 		base.DB.SSLMode = override.DB.SSLMode
 	}
 
+	if override.RateLimit.IsEnabledIsSet {
+		base.RateLimit.IsEnabled = override.RateLimit.IsEnabled
+	}
+
+	if override.RateLimit.IsRequestsPerMinuteIsSet {
+		base.RateLimit.RequestsPerMinute = override.RateLimit.RequestsPerMinute
+	}
+
+	if override.RateLimit.IsBurstIsSet {
+		base.RateLimit.Burst = override.RateLimit.Burst
+	}
+
 	return base
 }
 
@@ -167,6 +201,24 @@ func applyEnvOverrides(cfg Config) Config {
 	cfg.DB.Password = envOrDefault("DB_PASSWORD", cfg.DB.Password)
 	cfg.DB.SSLMode = envOrDefault("DB_SSL_MODE", cfg.DB.SSLMode)
 
+	isRateLimitEnabled, isRateLimitEnabledIsSet := envBool("RATE_LIMIT_ENABLED")
+	if isRateLimitEnabledIsSet {
+		cfg.RateLimit.IsEnabled = isRateLimitEnabled
+		cfg.RateLimit.IsEnabledIsSet = true
+	}
+
+	requestsPerMinute, isRequestsPerMinuteIsSet := envInt("RATE_LIMIT_REQUESTS_PER_MINUTE")
+	if isRequestsPerMinuteIsSet {
+		cfg.RateLimit.RequestsPerMinute = requestsPerMinute
+		cfg.RateLimit.IsRequestsPerMinuteIsSet = true
+	}
+
+	burst, isBurstIsSet := envInt("RATE_LIMIT_BURST")
+	if isBurstIsSet {
+		cfg.RateLimit.Burst = burst
+		cfg.RateLimit.IsBurstIsSet = true
+	}
+
 	return cfg
 }
 
@@ -181,5 +233,33 @@ func envOrDefault(key string, defaultValue string) string {
 	}
 
 	return value
+}
+
+func envBool(key string) (bool, bool) {
+	raw, isOk := os.LookupEnv(key)
+	if !isOk || raw == "" {
+		return false, false
+	}
+
+	parsed, err := strconv.ParseBool(raw)
+	if err != nil {
+		return false, false
+	}
+
+	return parsed, true
+}
+
+func envInt(key string) (int, bool) {
+	raw, isOk := os.LookupEnv(key)
+	if !isOk || raw == "" {
+		return 0, false
+	}
+
+	parsed, err := strconv.Atoi(raw)
+	if err != nil {
+		return 0, false
+	}
+
+	return parsed, true
 }
 

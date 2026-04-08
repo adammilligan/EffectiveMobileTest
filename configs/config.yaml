@@ -10,3 +10,8 @@ db:
   user: subscriptions
   password: subscriptions
 
+rate_limit:
+  enabled: true
+  requests_per_minute: 120
+  burst: 20
+

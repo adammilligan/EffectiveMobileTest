@@ -21,9 +21,26 @@ type LogConfig struct {
 	Level string `yaml:"level"`
 }
 
+// RateLimitConfig describes API rate limiting parameters.
+type RateLimitConfig struct {
+	IsEnabled        bool
+	IsEnabledIsSet   bool
+	RequestsPerMinute      int
+	IsRequestsPerMinuteIsSet bool
+	Burst            int
+	IsBurstIsSet     bool
+}
+
+type rateLimitYAMLConfig struct {
+	IsEnabled         *bool `yaml:"enabled"`
+	RequestsPerMinute *int  `yaml:"requests_per_minute"`
+	Burst             *int  `yaml:"burst"`
+}
+
 type yamlConfig struct {
-	Server ServerConfig `yaml:"server"`
-	Log    LogConfig    `yaml:"log"`
-	DB     DBConfig     `yaml:"db"`
+	Server    ServerConfig      `yaml:"server"`
+	Log       LogConfig         `yaml:"log"`
+	DB        DBConfig          `yaml:"db"`
+	RateLimit rateLimitYAMLConfig `yaml:"rate_limit"`
 }
 

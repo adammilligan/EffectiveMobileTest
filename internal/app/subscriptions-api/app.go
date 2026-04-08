@@ -40,7 +40,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	handlers := NewHandlers(service)
 
 	return &App{
-		Router: NewRouter(handlers),
+		Router: NewRouter(cfg, handlers),
 		Pool:   pool,
 	}, nil
 }

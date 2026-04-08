@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/adammilligan/EffectiveMobileTest/internal/pkg/config"
 	"github.com/adammilligan/EffectiveMobileTest/internal/pkg/subscriptions"
 )
 
@@ -44,7 +45,7 @@ func TestCreateValidation(t *testing.T) {
 	t.Parallel()
 
 	h := NewHandlers(fakeService{})
-	r := NewRouter(h)
+	r := NewRouter(config.Config{RateLimit: config.RateLimitConfig{IsEnabled: false}}, h)
 
 	tests := map[string]struct {
 		body       string
