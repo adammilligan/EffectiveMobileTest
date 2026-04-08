@@ -3,6 +3,7 @@ package subscriptionsapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -14,7 +15,7 @@ import (
 )
 
 type Handlers struct {
-	repo repo
+	service Service
 }
 
 type repo interface {
@@ -26,8 +27,10 @@ type repo interface {
 	FindOverlappingForTotal(ctx context.Context, p subscriptions.TotalQueryParams) ([]subscriptions.Subscription, error)
 }
 
-func NewHandlers(repo repo) *Handlers {
-	return &Handlers{repo: repo}
+func NewHandlers(service Service) *Handlers {
+	return &Handlers{
+		service: service,
+	}
 }
 
 type subscriptionResponse struct {
@@ -102,21 +105,16 @@ func (h *Handlers) Create(w http.ResponseWriter, r *http.Request) {
 	var end *subscriptions.Month
 
 	if req.EndDate != nil {
-		m, err := subscriptions.ParseMonth(*req.EndDate)
-		if err != nil {
-			httpjson.WriteError(w, http.StatusBadRequest, err.Error())
+		month, parseErr := subscriptions.ParseMonth(*req.EndDate)
+		if parseErr != nil {
+			httpjson.WriteError(w, http.StatusBadRequest, parseErr.Error())
 			return
 		}
 
-		if m.IsBefore(start) {
-			httpjson.WriteError(w, http.StatusBadRequest, "end_date must be >= start_date")
-			return
-		}
-
-		end = &m
+		end = &month
 	}
 
-	created, err := h.repo.Create(r.Context(), subscriptions.CreateParams{
+	created, err := h.service.Create(r.Context(), subscriptions.CreateParams{
 		ServiceName: req.ServiceName,
 		PriceRub:    req.Price,
 		UserID:      req.UserID,
@@ -124,6 +122,11 @@ func (h *Handlers) Create(w http.ResponseWriter, r *http.Request) {
 		EndMonth:    end,
 	})
 	if err != nil {
+		if errors.Is(err, ErrInvalidDateRange) {
+			httpjson.WriteError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
 		return
 	}
@@ -138,7 +141,7 @@ func (h *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s, isFound, err := h.repo.Get(r.Context(), id)
+	s, isFound, err := h.service.Get(r.Context(), id)
 	if err != nil {
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
 		return
@@ -234,8 +237,13 @@ func (h *Handlers) Patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updated, isFound, err := h.repo.Update(r.Context(), id, p)
+	updated, isFound, err := h.service.Patch(r.Context(), id, p)
 	if err != nil {
+		if errors.Is(err, ErrInvalidDateRange) {
+			httpjson.WriteError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
 		return
 	}
@@ -255,7 +263,7 @@ func (h *Handlers) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isDeleted, err := h.repo.Delete(r.Context(), id)
+	isDeleted, err := h.service.Delete(r.Context(), id)
 	if err != nil {
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
 		return
@@ -289,7 +297,7 @@ func (h *Handlers) List(w http.ResponseWriter, r *http.Request) {
 	limit := parseIntQuery(r, "limit", 50)
 	offset := parseIntQuery(r, "offset", 0)
 
-	list, err := h.repo.List(r.Context(), subscriptions.ListParams{
+	list, err := h.service.List(r.Context(), subscriptions.ListParams{
 		UserID:      userID,
 		ServiceName: serviceName,
 		Limit:       limit,
@@ -344,27 +352,20 @@ func (h *Handlers) Total(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if from.Time().After(to.Time()) {
-		httpjson.WriteError(w, http.StatusBadRequest, "from must be <= to")
-		return
-	}
-
-	items, err := h.repo.FindOverlappingForTotal(r.Context(), subscriptions.TotalQueryParams{
+	total, err := h.service.Total(r.Context(), subscriptions.TotalQueryParams{
 		UserID:      userID,
 		ServiceName: serviceName,
 		From:        from,
 		To:          to,
 	})
 	if err != nil {
+		if errors.Is(err, ErrInvalidPeriodDateRange) {
+			httpjson.WriteError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
 		return
-	}
-
-	total := 0
-
-	for _, s := range items {
-		months := subscriptions.OverlapMonthsInclusive(s.StartMonth, s.EndMonth, from, to)
-		total += months * s.PriceRub
 	}
 
 	httpjson.WriteJSON(w, http.StatusOK, totalResponse{Total: total})

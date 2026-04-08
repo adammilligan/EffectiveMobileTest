@@ -36,7 +36,8 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 
 	repo := subscriptions.NewRepo(pool)
-	handlers := NewHandlers(repo)
+	service := NewService(repo)
+	handlers := NewHandlers(service)
 
 	return &App{
 		Router: NewRouter(handlers),

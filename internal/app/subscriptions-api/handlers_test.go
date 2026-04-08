@@ -10,29 +10,40 @@ import (
 	"github.com/adammilligan/EffectiveMobileTest/internal/pkg/subscriptions"
 )
 
-type fakeRepo struct{}
+type fakeService struct{}
 
-func (f fakeRepo) Create(ctx context.Context, p subscriptions.CreateParams) (subscriptions.Subscription, error) {
+func (f fakeService) Create(ctx context.Context, params subscriptions.CreateParams) (subscriptions.Subscription, error) {
+	if params.EndMonth != nil && params.EndMonth.IsBefore(params.StartMonth) {
+		return subscriptions.Subscription{}, ErrInvalidDateRange
+	}
+
 	return subscriptions.Subscription{}, nil
 }
-func (f fakeRepo) Get(ctx context.Context, id string) (subscriptions.Subscription, bool, error) {
+
+func (f fakeService) Get(ctx context.Context, id string) (subscriptions.Subscription, bool, error) {
 	return subscriptions.Subscription{}, false, nil
 }
-func (f fakeRepo) Update(ctx context.Context, id string, p subscriptions.UpdateParams) (subscriptions.Subscription, bool, error) {
+
+func (f fakeService) Patch(ctx context.Context, id string, params subscriptions.UpdateParams) (subscriptions.Subscription, bool, error) {
 	return subscriptions.Subscription{}, false, nil
 }
-func (f fakeRepo) Delete(ctx context.Context, id string) (bool, error) { return false, nil }
-func (f fakeRepo) List(ctx context.Context, p subscriptions.ListParams) ([]subscriptions.Subscription, error) {
+
+func (f fakeService) Delete(ctx context.Context, id string) (bool, error) {
+	return false, nil
+}
+
+func (f fakeService) List(ctx context.Context, params subscriptions.ListParams) ([]subscriptions.Subscription, error) {
 	return nil, nil
 }
-func (f fakeRepo) FindOverlappingForTotal(ctx context.Context, p subscriptions.TotalQueryParams) ([]subscriptions.Subscription, error) {
-	return nil, nil
+
+func (f fakeService) Total(ctx context.Context, params subscriptions.TotalQueryParams) (int, error) {
+	return 0, nil
 }
 
 func TestCreateValidation(t *testing.T) {
 	t.Parallel()
 
-	h := NewHandlers(fakeRepo{})
+	h := NewHandlers(fakeService{})
 	r := NewRouter(h)
 
 	tests := map[string]struct {
