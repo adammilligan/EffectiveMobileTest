@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+// NewRouter builds subscriptions API HTTP router.
 func NewRouter(cfg config.Config, h *Handlers) http.Handler {
 	r := chi.NewRouter()
 

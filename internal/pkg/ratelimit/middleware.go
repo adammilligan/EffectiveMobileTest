@@ -96,24 +96,31 @@ func (s *store) allowWithDetails(key string, requestsPerMinute int, burst int, n
 
 	if existing, isOk := s.byKey[key]; isOk {
 		existing.lastSeen = now
+
 		isAllowed, wait := existing.bucket.allow(now)
 		remaining := int(math.Floor(existing.bucket.tokens))
+
 		if remaining < 0 {
 			remaining = 0
 		}
+
 		if remaining > burst {
 			remaining = burst
 		}
+
 		s.byKey[key] = existing
+
 		return isAllowed, wait, remaining
 	}
 
 	b := newBucket(now, requestsPerMinute, burst)
 	isAllowed, wait := b.allow(now)
 	remaining := int(math.Floor(b.tokens))
+
 	if remaining < 0 {
 		remaining = 0
 	}
+
 	if remaining > burst {
 		remaining = burst
 	}
@@ -144,6 +151,8 @@ func (s *store) cleanup(now time.Time, maxIdle time.Duration) {
 	s.lastCleanup = now
 }
 
+// Middleware applies in-memory rate limiting per client IP.
+// It returns HTTP 429 when the rate limit is exceeded.
 func Middleware(cfg config.RateLimitConfig) func(http.Handler) http.Handler {
 	if !cfg.IsEnabled {
 		return func(next http.Handler) http.Handler {
@@ -174,6 +183,7 @@ func Middleware(cfg config.RateLimitConfig) func(http.Handler) http.Handler {
 			// Provide rate-limit diagnostics for clients.
 			w.Header().Set("X-RateLimit-Limit", strconv.Itoa(requestsPerMinute))
 			w.Header().Set("X-RateLimit-Remaining", strconv.Itoa(remaining))
+
 			resetUnix := now.Add(wait).Unix()
 			w.Header().Set("X-RateLimit-Reset", strconv.FormatInt(resetUnix, 10))
 
@@ -185,6 +195,7 @@ func Middleware(cfg config.RateLimitConfig) func(http.Handler) http.Handler {
 
 				w.Header().Set("Retry-After", strconv.Itoa(retryAfterSeconds))
 				httpjson.WriteError(w, http.StatusTooManyRequests, "rate limit exceeded")
+
 				return
 			}
 

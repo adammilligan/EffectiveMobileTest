@@ -128,6 +128,7 @@ func (h *Handlers) Create(w http.ResponseWriter, r *http.Request) {
 		}
 
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
+
 		return
 	}
 
@@ -144,6 +145,7 @@ func (h *Handlers) Get(w http.ResponseWriter, r *http.Request) {
 	s, isFound, err := h.service.Get(r.Context(), id)
 	if err != nil {
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
+
 		return
 	}
 
@@ -245,6 +247,7 @@ func (h *Handlers) Patch(w http.ResponseWriter, r *http.Request) {
 		}
 
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
+
 		return
 	}
 
@@ -266,6 +269,7 @@ func (h *Handlers) Delete(w http.ResponseWriter, r *http.Request) {
 	isDeleted, err := h.service.Delete(r.Context(), id)
 	if err != nil {
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
+
 		return
 	}
 
@@ -305,6 +309,7 @@ func (h *Handlers) List(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
+
 		return
 	}
 
@@ -365,6 +370,7 @@ func (h *Handlers) Total(w http.ResponseWriter, r *http.Request) {
 		}
 
 		httpjson.WriteError(w, http.StatusInternalServerError, "db error")
+
 		return
 	}
 

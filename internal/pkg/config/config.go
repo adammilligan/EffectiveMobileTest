@@ -120,10 +120,12 @@ func loadFromYaml(path string) (Config, error) {
 		rateLimit.IsEnabled = *yc.RateLimit.IsEnabled
 		rateLimit.IsEnabledIsSet = true
 	}
+
 	if yc.RateLimit.RequestsPerMinute != nil {
 		rateLimit.RequestsPerMinute = *yc.RateLimit.RequestsPerMinute
 		rateLimit.IsRequestsPerMinuteIsSet = true
 	}
+
 	if yc.RateLimit.Burst != nil {
 		rateLimit.Burst = *yc.RateLimit.Burst
 		rateLimit.IsBurstIsSet = true

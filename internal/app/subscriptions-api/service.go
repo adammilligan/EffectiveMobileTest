@@ -8,10 +8,13 @@ import (
 )
 
 var (
+	// ErrInvalidDateRange is returned when end_date must be >= start_date.
 	ErrInvalidDateRange       = errors.New("end_date must be >= start_date")
+	// ErrInvalidPeriodDateRange is returned when from must be <= to.
 	ErrInvalidPeriodDateRange = errors.New("from must be <= to")
 )
 
+// Service contains business logic for subscriptions.
 type Service interface {
 	Create(ctx context.Context, params subscriptions.CreateParams) (subscriptions.Subscription, error)
 	Get(ctx context.Context, id string) (subscriptions.Subscription, bool, error)
@@ -25,6 +28,7 @@ type service struct {
 	repo repo
 }
 
+// NewService creates subscriptions business logic service.
 func NewService(repo repo) Service {
 	return &service{
 		repo: repo,
